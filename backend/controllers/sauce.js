@@ -1,17 +1,10 @@
 const Sauce = require('../models/sauce');
+const fs = require('fs');
 
 exports.getAllSauces = (req, res, next) => {
-  Sauce.find().then(
-    (sauces) => {
-      res.status(200).json(sauces);
-    }
-  ).catch(
-    (error) => {
-      res.status(400).json({
-        error: error
-      });
-    }
-  );
+  Sauce.find()
+  .then((sauces) => {res.status(200).json( sauces )})
+  .catch((error) => {res.status(400).json({ error: error })});
 };
 
 exports.getOneSauce = (req, res, next) => {
@@ -24,23 +17,23 @@ exports.getOneSauce = (req, res, next) => {
 }
 
 exports.createSauce = (req, res, next) => {
-	const sauceFields = JSON.parse(req.body.sauce);
+	const sauceObject = JSON.parse(req.body.sauce);
 
-	if(!sauceFields.userId || !sauceFields.name ||
-	!sauceFields.manufacturer || !sauceFields.description ||
-	!sauceFields.mainPepper || !sauceFields.heat ||
+	if(!sauceObject.userId || !sauceObject.name ||
+	!sauceObject.manufacturer || !sauceObject.description ||
+	!sauceObject.mainPepper || !sauceObject.heat ||
 	!req.file.path) {
-		console.log(sauceFields.imageUrl);
+		console.log(sauceObject.imageUrl);
 		return res.status(500).json({ error: 'Bad request' });
 	}
 	const sauce = new Sauce({
-		userId: sauceFields.userId,
-		name: sauceFields.name,
-		manufacturer: sauceFields.manufacturer,
-		description: sauceFields.description,
-		mainPepper: sauceFields.mainPepper,
+		userId: sauceObject.userId,
+		name: sauceObject.name,
+		manufacturer: sauceObject.manufacturer,
+		description: sauceObject.description,
+		mainPepper: sauceObject.mainPepper,
 		imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
-		heat: sauceFields.heat,
+		heat: sauceObject.heat,
 		likes: 0,
 		dislikes: 0,
 		usersLiked: [],
@@ -51,6 +44,20 @@ exports.createSauce = (req, res, next) => {
 		.catch(error => res.status(400).json({ error }));
 };
 
-exports.deleteSauce = (req, res, next) => {
-
+exports.editSauce = (req, res, next) => {
+	console.log(req.body);
+	res.status(201).json({ message: 'Edited' });
 }
+
+exports.deleteSauce = (req, res, next) => {
+	Sauce.findOne({ _id: req.params.id })
+		.then(sauce => {
+			const filename = sauce.imageUrl.split('/images/')[1];
+			fs.unlink(`images/${filename}`, () => {
+				Sauce.deleteOne({ _id: req.params.id })
+					.then(() => res.status(200).json({ message: 'Sauce deleted' }))
+					.catch(error => res.status(400).json({ error: error }))
+			});
+		})
+		.catch(() => res.status(400).json({ message: 'Sauce not found' }));
+};
