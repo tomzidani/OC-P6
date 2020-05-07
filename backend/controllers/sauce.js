@@ -8,7 +8,6 @@ exports.getAllSauces = (req, res, next) => {
 };
 
 exports.getOneSauce = (req, res, next) => {
-	console.log(req.params.id);
 	Sauce.findOne({
 		_id: req.params.id
 	})
@@ -45,9 +44,15 @@ exports.createSauce = (req, res, next) => {
 };
 
 exports.editSauce = (req, res, next) => {
-	console.log(req.body);
-	res.status(201).json({ message: 'Edited' });
-}
+	const sauceObject = req.file ?
+	{
+		...JSON.parse(req.body.sauce),
+		imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
+	} : { ...req.body };
+	Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
+		.then(() => res.status(200).json({ message: 'Sauce edited' }))
+		.catch(error => res.status(400).json({ error }));
+};
 
 exports.deleteSauce = (req, res, next) => {
 	Sauce.findOne({ _id: req.params.id })
@@ -61,3 +66,7 @@ exports.deleteSauce = (req, res, next) => {
 		})
 		.catch(() => res.status(400).json({ message: 'Sauce not found' }));
 };
+
+exports.likeSauce = (req, res, next) => {
+	res.status(200).json({ message: 'Good'});
+}
