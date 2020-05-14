@@ -2,6 +2,9 @@
 const Sauce = require('../models/sauce');
 const fs = require('fs');
 
+// Regex
+const regex = /^[a-zA-Z0-9 _.,!()&]+$/;
+
 // Récupérer toutes les sauces
 exports.getAllSauces = (req, res, next) => {
     Sauce.find()
@@ -42,6 +45,15 @@ exports.createSauce = (req, res, next) => {
         });
     }
 
+    // Vérification des caractères
+    if (!regex.test(sauceObject.name) || !regex.test(sauceObject.manufacturer) ||
+        !regex.test(sauceObject.description) || !regex.test(sauceObject.mainPepper) ||
+        !regex.test(sauceObject.heat)) {
+        return res.status(500).json({
+            error: 'Fields contain invalid characters'
+        });
+    }
+
     // Création et sauvegarde de la sauce
     const sauce = new Sauce({
         userId: sauceObject.userId,
@@ -67,6 +79,16 @@ exports.createSauce = (req, res, next) => {
 
 // Modification de la sauce
 exports.editSauce = (req, res, next) => {
+
+    // Vérification des caractères
+    if (!regex.test(req.body.name) || !regex.test(req.body.manufacturer) ||
+        !regex.test(req.body.description) || !regex.test(req.body.mainPepper) ||
+        !regex.test(req.body.heat)) {
+
+        return res.status(500).json({
+            error: 'Fields contain invalid characters'
+        });
+    }
 
     // Récupération des informations du formulaire
     const sauceObject = req.file ? {
